@@ -12,8 +12,8 @@ def element2robot2eccl(poset, element2edge, pruned_subgraph):
     robot2eccl = dict()
     # iterate over all elements and all literals
     for element in poset:
-        edge_label = pruned_subgraph.edges[element2edge[element]]['label']
-        if edge_label != '1':
+        edge_label = pruned_subgraph.edges[element2edge[element]]["label"]
+        if edge_label != "1":
             for c, clause in enumerate(edge_label):
                 for l, literal in enumerate(clause):
                     robot = literal[-1]
@@ -25,8 +25,8 @@ def element2robot2eccl(poset, element2edge, pruned_subgraph):
                     else:
                         robot2eccl[robot] = [(element, 1, c, l)]
         # same for the vertex label
-        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]['label']
-        if self_loop_label and self_loop_label != '1':
+        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]["label"]
+        if self_loop_label and self_loop_label != "1":
             for c, clause in enumerate(self_loop_label):
                 for l, literal in enumerate(clause):
                     robot = literal[-1]
@@ -41,7 +41,7 @@ def element2robot2eccl(poset, element2edge, pruned_subgraph):
 
 def incomparable_larger(poset, poset_relation, hasse_diagram):
     """
-        elements that are larger or imcomparable to a certain element
+    elements that are larger or imcomparable to a certain element
     """
     incomparable_element = dict()
     larger_element = dict()  # prior to
@@ -68,9 +68,16 @@ def incomparable_larger(poset, poset_relation, hasse_diagram):
     return incomparable_element, larger_element, smaller_element, strict_larger_element
 
 
-def update_poset4_suffix(pos, max_pos, element2edge, element_component2label, poset_relation, incomparable_element,
-                         larger_element, pruned_subgraph):
-
+def update_poset4_suffix(
+    pos,
+    max_pos,
+    element2edge,
+    element_component2label,
+    poset_relation,
+    incomparable_element,
+    larger_element,
+    pruned_subgraph,
+):
     # poset
     pos2 = [element + max_pos for element in pos]
 
@@ -93,15 +100,16 @@ def update_poset4_suffix(pos, max_pos, element2edge, element_component2label, po
     poset_relation.update(poset_relation2)
 
     # incomparable_element
-    incomparable_element2 = {element + max_pos: [e + max_pos for e in in_cmp]
-                             for element, in_cmp in incomparable_element.items()}
+    incomparable_element2 = {
+        element + max_pos: [e + max_pos for e in in_cmp] for element, in_cmp in incomparable_element.items()
+    }
     incomparable_element.update(incomparable_element2)
 
-    larger_element2 = {element + max_pos: [e + max_pos for e in lg] +
-                                          [e for e in pos if pruned_subgraph.edges[element2edge[e]]['label'] != '1']
-                       for element, lg in larger_element.items()}
+    larger_element2 = {
+        element + max_pos: [e + max_pos for e in lg]
+        + [e for e in pos if pruned_subgraph.edges[element2edge[e]]["label"] != "1"]
+        for element, lg in larger_element.items()
+    }
     larger_element.update(larger_element2)
     # update pos
     pos += pos2
-
-

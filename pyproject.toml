@@ -1,0 +1,25 @@
+[project]
+name = "ltl-mrta"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "backlog==2.0.4",
+    "gurobipy==10.0.2",
+    "matplotlib==3.8.1",
+    "networkx==3.1",
+    "numpy==1.25.2",
+    "scipy==1.11.4",
+    "setuptools==68.0.0",
+    "sympy==1.12",
+    "termcolor==2.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.9.2",
+]
+
+[tool.ruff]
+line-length = 120
