@@ -23,33 +23,68 @@ def construct_node_set(poset, element2edge, pruned_subgraph, type_robot_label, m
     # node set for self-loop label
     final_element_type_robot_node = dict()
     for element in poset:
-        edge_label = pruned_subgraph.edges[element2edge[element]]['label']
+        edge_label = pruned_subgraph.edges[element2edge[element]]["label"]
         # node set for edge label,
-        if edge_label != '1':
-            node_index = construct_node_set_helper(element, 1, edge_label, element_component_clause_literal_node,
-                                                   node_location_type_component_element, node_index, minimal_element,
-                                                   type_robot_label, final_element_type_robot_node, last_subtask, loop)
+        if edge_label != "1":
+            node_index = construct_node_set_helper(
+                element,
+                1,
+                edge_label,
+                element_component_clause_literal_node,
+                node_location_type_component_element,
+                node_index,
+                minimal_element,
+                type_robot_label,
+                final_element_type_robot_node,
+                last_subtask,
+                loop,
+            )
         # with self loop
-        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]['label']
-        if self_loop_label and self_loop_label != '1':
-            node_index = construct_node_set_helper(element, 0, self_loop_label, element_component_clause_literal_node,
-                                                   node_location_type_component_element, node_index, minimal_element,
-                                                   type_robot_label, final_element_type_robot_node, last_subtask)
+        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]["label"]
+        if self_loop_label and self_loop_label != "1":
+            node_index = construct_node_set_helper(
+                element,
+                0,
+                self_loop_label,
+                element_component_clause_literal_node,
+                node_location_type_component_element,
+                node_index,
+                minimal_element,
+                type_robot_label,
+                final_element_type_robot_node,
+                last_subtask,
+            )
 
-    return init_type_robot_node, element_component_clause_literal_node, node_location_type_component_element, \
-           node_index, final_element_type_robot_node
+    return (
+        init_type_robot_node,
+        element_component_clause_literal_node,
+        node_location_type_component_element,
+        node_index,
+        final_element_type_robot_node,
+    )
 
 
-def construct_node_set_helper(element, component, label, element_component_clause_literal_node,
-                              node_location_type_component_element, node_index, minimal_element,
-                              type_robot_label, final_element_type_robot_node, last_subtask, loop=False):
+def construct_node_set_helper(
+    element,
+    component,
+    label,
+    element_component_clause_literal_node,
+    node_location_type_component_element,
+    node_index,
+    minimal_element,
+    type_robot_label,
+    final_element_type_robot_node,
+    last_subtask,
+    loop=False,
+):
     # edge label not equal 1 or element is in the set of minimal elements
     for c in range(len(label)):
         for l in range(len(label[c])):
             end = node_index + label[c][l][2]
             element_component_clause_literal_node[(element, component, c, l)] = list(range(node_index, end))
-            node_location_type_component_element.update({node: list(label[c][l][0:2]) + [component, element]
-                                                         for node in list(range(node_index, end))})
+            node_location_type_component_element.update(
+                {node: list(label[c][l][0:2]) + [component, element] for node in list(range(node_index, end))}
+            )
             node_index = end
 
     # edge label for minimal elements
@@ -67,7 +102,7 @@ def construct_node_set_helper(element, component, label, element_component_claus
     else:
         if component == 1 and element in minimal_element:
             type_robot_node = dict()
-            for location, type_robots in last_subtask['essential_robot_edge'].items():
+            for location, type_robots in last_subtask["essential_robot_edge"].items():
                 for type_robot in type_robots:
                     type_robot_node[type_robot] = node_index
                     node_location_type_component_element[node_index] = [location, type_robot[0], 1, element]
@@ -76,10 +111,20 @@ def construct_node_set_helper(element, component, label, element_component_claus
     return node_index
 
 
-def construct_edge_set(poset, element_component_clause_literal_node, element2edge, pruned_subgraph,
-                       element_component2label, init_type_robot_node, incomparable_element, strict_larger_element,
-                       larger_element, imply,
-                       minimal_element, final_element_type_robot_node):
+def construct_edge_set(
+    poset,
+    element_component_clause_literal_node,
+    element2edge,
+    pruned_subgraph,
+    element_component2label,
+    init_type_robot_node,
+    incomparable_element,
+    strict_larger_element,
+    larger_element,
+    imply,
+    minimal_element,
+    final_element_type_robot_node,
+):
     """
     construct the edge set of the routing graph
     """
@@ -88,32 +133,56 @@ def construct_edge_set(poset, element_component_clause_literal_node, element2edg
         # prior subtasks: all elements that are incomparable or larger than the current one
         incmp_large_element = incomparable_element[element] + larger_element[element]
 
-        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]['label']
-        edge_label = pruned_subgraph.edges[element2edge[element]]['label']
+        self_loop_label = pruned_subgraph.nodes[element2edge[element][0]]["label"]
+        edge_label = pruned_subgraph.edges[element2edge[element]]["label"]
 
         # edge label
-        if edge_label != '1':
-            construct_edge_set_for_edge_helper(element, element_component2label,
-                                               element_component_clause_literal_node,
-                                               init_type_robot_node, incmp_large_element, edge_set)
+        if edge_label != "1":
+            construct_edge_set_for_edge_helper(
+                element,
+                element_component2label,
+                element_component_clause_literal_node,
+                init_type_robot_node,
+                incmp_large_element,
+                edge_set,
+            )
 
         if element in minimal_element:
-            construct_edge_set_for_edge_minimal_helper(element, element_component2label,
-                                                       element_component_clause_literal_node,
-                                                       init_type_robot_node, incmp_large_element, edge_set,
-                                                       final_element_type_robot_node)
+            construct_edge_set_for_edge_minimal_helper(
+                element,
+                element_component2label,
+                element_component_clause_literal_node,
+                init_type_robot_node,
+                incmp_large_element,
+                edge_set,
+                final_element_type_robot_node,
+            )
         # vertex label
-        if self_loop_label and self_loop_label != '1':
-            construct_edge_set_for_node_helper(element, element2edge, element_component2label,
-                                               element_component_clause_literal_node,
-                                               init_type_robot_node, strict_larger_element, incomparable_element,
-                                               edge_set, imply, pruned_subgraph)
+        if self_loop_label and self_loop_label != "1":
+            construct_edge_set_for_node_helper(
+                element,
+                element2edge,
+                element_component2label,
+                element_component_clause_literal_node,
+                init_type_robot_node,
+                strict_larger_element,
+                incomparable_element,
+                edge_set,
+                imply,
+                pruned_subgraph,
+            )
 
     return edge_set
 
 
-def construct_edge_set_for_edge_helper(element, element_component2label, element_component_clause_literal_node,
-                                       init_type_robot_node, incmp_element, edge_set):
+def construct_edge_set_for_edge_helper(
+    element,
+    element_component2label,
+    element_component_clause_literal_node,
+    init_type_robot_node,
+    incmp_element,
+    edge_set,
+):
     for label, eccls in element_component2label[(element, 1)].items():
         # from initial locations
         from_node = [node for type_robot, node in init_type_robot_node.items() if type_robot[0] == label[1]]
@@ -132,12 +201,12 @@ def construct_edge_set_for_edge_helper(element, element_component2label, element
                                     # from_node == # to_node
                                     if len(element_component_clause_literal_node[in_eccl]) == len(to_node):
                                         # if they have the same indicator, then the number of vertices must be the same
-                                        from_node = element_component_clause_literal_node[in_eccl][:len(to_node)]
+                                        from_node = element_component_clause_literal_node[in_eccl][: len(to_node)]
                                         edge_set += [(from_node[i], to_node[i]) for i in range(len(to_node))]
                                     else:
                                         edge_set += list(
-                                            itertools.product(element_component_clause_literal_node[in_eccl],
-                                                              to_node))
+                                            itertools.product(element_component_clause_literal_node[in_eccl], to_node)
+                                        )
 
                     except KeyError:  # label is 1
                         pass
@@ -149,20 +218,26 @@ def construct_edge_set_for_edge_helper(element, element_component2label, element
                     if label[1] == in_label[1]:  # same robot type
                         for in_eccl in in_eccls:
                             if len(element_component_clause_literal_node[in_eccl]) == len(to_node):
-                                from_node = element_component_clause_literal_node[in_eccl][:len(to_node)]
+                                from_node = element_component_clause_literal_node[in_eccl][: len(to_node)]
                                 edge_set += [(from_node[i], to_node[i]) for i in range(len(to_node))]
                             else:
-                                edge_set += list(itertools.product(element_component_clause_literal_node[in_eccl],
-                                                                   to_node))
+                                edge_set += list(
+                                    itertools.product(element_component_clause_literal_node[in_eccl], to_node)
+                                )
 
             except KeyError:
                 pass
 
 
-def construct_edge_set_for_edge_minimal_helper(element, element_component2label,
-                                               element_component_clause_literal_node,
-                                               init_type_robot_node, incmp_element, edge_set,
-                                               final_element_type_robot_node):
+def construct_edge_set_for_edge_minimal_helper(
+    element,
+    element_component2label,
+    element_component_clause_literal_node,
+    init_type_robot_node,
+    incmp_element,
+    edge_set,
+    final_element_type_robot_node,
+):
     """
     create edge set for the extra literal, no outgoing edges from nodes for the extra literal
     """
@@ -180,8 +255,9 @@ def construct_edge_set_for_edge_minimal_helper(element, element_component2label,
                         if type_robot[0] == in_label[1]:  # same robot type
                             for in_eccl in in_eccls:
                                 # randomly set one node
-                                edge_set += list(itertools.product(element_component_clause_literal_node[in_eccl],
-                                                                   [to_node]))
+                                edge_set += list(
+                                    itertools.product(element_component_clause_literal_node[in_eccl], [to_node])
+                                )
                 except KeyError:  # label is 1
                     pass
 
@@ -191,19 +267,26 @@ def construct_edge_set_for_edge_minimal_helper(element, element_component2label,
             for in_label, in_eccls in element_component2label[(element, 0)].items():
                 if type_robot[0] == in_label[1]:  # same robot type
                     for in_eccl in in_eccls:
-                        edge_set += list(itertools.product(element_component_clause_literal_node[in_eccl],
-                                                           [to_node]))
+                        edge_set += list(itertools.product(element_component_clause_literal_node[in_eccl], [to_node]))
 
         except KeyError:
             pass
 
 
-def construct_edge_set_for_node_helper(element, element2edge, element_component2label,
-                                       element_component_clause_literal_node,
-                                       init_type_robot_node, strict_larger_element, incomparable_element,
-                                       edge_set, imply, pruned_subgraph):
+def construct_edge_set_for_node_helper(
+    element,
+    element2edge,
+    element_component2label,
+    element_component_clause_literal_node,
+    init_type_robot_node,
+    strict_larger_element,
+    incomparable_element,
+    edge_set,
+    imply,
+    pruned_subgraph,
+):
     """
-        edge set for the nodes in NBA
+    edge set for the nodes in NBA
     """
     # can be the first subtask
     if not strict_larger_element[element]:
@@ -218,13 +301,13 @@ def construct_edge_set_for_node_helper(element, element2edge, element_component2
     for another_element in strict_larger_element[element] + incomparable_element[element]:
         edge = element2edge[another_element]
         # have positive literals
-        if pruned_subgraph.nodes[edge[1]]['label'] != '1':
+        if pruned_subgraph.nodes[edge[1]]["label"] != "1":
             # paired clause with implication
             for pair in imply[edge]:
                 # literal in the end vertex
-                for index, lit in enumerate(pruned_subgraph.nodes[edge[1]]['label'][pair[1]]):
+                for index, lit in enumerate(pruned_subgraph.nodes[edge[1]]["label"][pair[1]]):
                     # literal in the edge
-                    index_in_edge = pruned_subgraph.edges[edge]['label'][pair[0]].index(lit)
+                    index_in_edge = pruned_subgraph.edges[edge]["label"][pair[0]].index(lit)
                     from_node = element_component_clause_literal_node[(another_element, 1, pair[0], index_in_edge)]
                     to_node = element_component_clause_literal_node[(element, 0, pair[1], index)]
                     edge_set += [(from_node[i], to_node[i]) for i in range(len(to_node))]
@@ -238,6 +321,14 @@ def construct_graph(num_nodes, node_location_type_component_element, edge_set, p
     for node in list(range(num_nodes)):
         ts.add_node(node, location_type_component_element=node_location_type_component_element[node])
     for edge in edge_set:
-        ts.add_edge(edge[0], edge[1], weight=p2p[(ts.nodes[edge[0]]['location_type_component_element'][0],
-                                                  ts.nodes[edge[1]]['location_type_component_element'][0])])
+        ts.add_edge(
+            edge[0],
+            edge[1],
+            weight=p2p[
+                (
+                    ts.nodes[edge[0]]["location_type_component_element"][0],
+                    ts.nodes[edge[1]]["location_type_component_element"][0],
+                )
+            ],
+        )
     return ts

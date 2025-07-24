@@ -1,39 +1,40 @@
 # -*- coding: utf-8 -*-
 
-from random import randint
-import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
-import numpy as np
-import random
-import sys
 import itertools
-import pickle
+import random
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon
+
+random.seed(42)  # Set a fixed seed for reproducibility
 
 
 class Workspace(object):
     """
     define the workspace where robots reside
     """
+
     def __init__(self):
         # dimension of the workspace
         # self.length = int(sys.argv[1])
         # self.width = int(sys.argv[1])
         # n = int(sys.argv[2])
-        self.length = 10 # 9   # length
-        self.width = 10 # 9   # width
+        self.length = 10  # 9   # length
+        self.width = 10  # 9   # width
         # n = 4
-        self.type_num = {1: 3, 2: 2}   # single-task robot
+        self.type_num = {1: 3, 2: 2}  # single-task robot
         self.workspace = (self.length, self.width)
         self.num_of_regions = 10
         self.num_of_obstacles = 10
         self.occupied = []
-        self.regions = {'l{0}'.format(i): j for i, j in enumerate(self.allocate_region_dars())}
-        self.obstacles = {'o{0}'.format(i+1): j for i, j in enumerate(self.allocate_obstacle_dars())}
+        self.regions = {"l{0}".format(i): j for i, j in enumerate(self.allocate_region_dars())}
+        self.obstacles = {"o{0}".format(i + 1): j for i, j in enumerate(self.allocate_obstacle_dars())}
         self.type_robot_location = self.initialize()
         # region and corresponding locations
-        self.label_location = {'r{0}'.format(i + 1): j for i, j in enumerate(list(self.type_robot_location.values()))}
+        self.label_location = {"r{0}".format(i + 1): j for i, j in enumerate(list(self.type_robot_location.values()))}
         # region where robots reside
         self.type_robot_label = dict(zip(self.type_robot_location.keys(), self.label_location.keys()))
         # atomic proposition
@@ -47,17 +48,17 @@ class Workspace(object):
     def reachable(self, location, obstacles):
         next_location = []
         # left
-        if location[0]-1 > 0 and (location[0]-1, location[1]) not in obstacles:
-            next_location.append((location, (location[0]-1, location[1])))
+        if location[0] - 1 > 0 and (location[0] - 1, location[1]) not in obstacles:
+            next_location.append((location, (location[0] - 1, location[1])))
         # right
-        if location[0]+1 < self.width and (location[0]+1, location[1]) not in obstacles:
-            next_location.append((location, (location[0]+1, location[1])))
+        if location[0] + 1 < self.width and (location[0] + 1, location[1]) not in obstacles:
+            next_location.append((location, (location[0] + 1, location[1])))
         # up
-        if location[1]+1 < self.length and (location[0], location[1]+1) not in obstacles:
-            next_location.append((location, (location[0], location[1]+1)))
+        if location[1] + 1 < self.length and (location[0], location[1] + 1) not in obstacles:
+            next_location.append((location, (location[0], location[1] + 1)))
         # down
-        if location[1]-1 > 0 and (location[0], location[1]-1) not in obstacles:
-            next_location.append((location, (location[0], location[1]-1)))
+        if location[1] - 1 > 0 and (location[0], location[1] - 1) not in obstacles:
+            next_location.append((location, (location[0], location[1] - 1)))
         return next_location
 
     def build_graph(self):
@@ -88,8 +89,9 @@ class Workspace(object):
                 min_length = np.inf
                 for source in self.regions[key_region[l1]]:
                     for target in self.regions[key_region[l2]]:
-                        length, _ = nx.algorithms.single_source_dijkstra(self.graph_workspace, source=source,
-                                                                         target=target)
+                        length, _ = nx.algorithms.single_source_dijkstra(
+                            self.graph_workspace, source=source, target=target
+                        )
                         if length < min_length:
                             min_length = length
                 p2p[(key_region[l1], key_region[l2])] = min_length
@@ -102,9 +104,11 @@ class Workspace(object):
             for l1 in range(len(self.regions)):
                 min_length = np.inf
                 for target in self.regions[key_region[l1]]:
-                    length, _ = nx.algorithms.single_source_dijkstra(self.graph_workspace,
-                                                                    source=self.label_location[key_init[r1]],
-                                                                    target=target)
+                    length, _ = nx.algorithms.single_source_dijkstra(
+                        self.graph_workspace,
+                        source=self.label_location[key_init[r1]],
+                        target=target,
+                    )
                     if length < min_length:
                         min_length = length
                 p2p[(key_init[r1], key_region[l1])] = min_length
@@ -112,9 +116,11 @@ class Workspace(object):
 
         for r1 in range(len(self.label_location)):
             for r2 in range(r1, len(self.label_location)):
-                length, path = nx.algorithms.single_source_dijkstra(self.graph_workspace,
-                                                                    source=self.label_location[key_init[r1]],
-                                                                    target=self.label_location[key_init[r2]])
+                length, path = nx.algorithms.single_source_dijkstra(
+                    self.graph_workspace,
+                    source=self.label_location[key_init[r1]],
+                    target=self.label_location[key_init[r2]],
+                )
                 p2p[(key_init[r1], key_init[r2])] = length
                 p2p[(key_init[r2], key_init[r1])] = length
 
@@ -127,18 +133,18 @@ class Workspace(object):
         plt.xticks(np.arange(0, self.width + 1, 1.0))
         plt.yticks(np.arange(0, self.length + 1, 1.0))
         # self.plot_workspace_helper(ax, self.regions, 'region')
-        self.plot_workspace_helper(ax, self.obstacles, 'obstacle')
+        self.plot_workspace_helper(ax, self.obstacles, "obstacle")
         for index, i in self.type_robot_location.items():
-            plt.plot(i[0] + 0.5, i[1] + 0.5, 'o')
-            ax.text(i[0] + 0.5, i[1] + 0.5, r'${}$'.format(index), fontsize=10)
+            plt.plot(i[0] + 0.5, i[1] + 0.5, "o")
+            ax.text(i[0] + 0.5, i[1] + 0.5, r"${}$".format(index), fontsize=10)
 
     def plot_workspace_helper(self, ax, obj, obj_label):
-        plt.rc('text', usetex=True)
-        plt.rc('font', family='serif')
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.grid(b=True, which='major', color='k', linestyle='--')
+        plt.rc("text", usetex=True)
+        plt.rc("font", family="serif")
+        plt.gca().set_aspect("equal", adjustable="box")
+        plt.grid(b=True, which="major", color="k", linestyle="--")
         for key in obj:
-            color = 'b' if obj_label != 'region' else 'c'
+            color = "b" if obj_label != "region" else "c"
             for grid in obj[key]:
                 x_ = grid[0]
                 y_ = grid[1]
@@ -152,7 +158,12 @@ class Workspace(object):
                 patches.append(polygon)
                 p = PatchCollection(patches, facecolors=color, edgecolors=color, alpha=0.4)
                 ax.add_collection(p)
-            ax.text(np.mean(x) - 0.2, np.mean(y) - 0.2, r'${}_{{{}}}$'.format(key[0], key[1:]), fontsize=8)
+            ax.text(
+                np.mean(x) - 0.2,
+                np.mean(y) - 0.2,
+                r"${}_{{{}}}$".format(key[0], key[1:]),
+                fontsize=8,
+            )
 
     def path_plot(self, robot_path):
         """
@@ -169,11 +180,19 @@ class Workspace(object):
                 continue
             x_pre = np.asarray([point[0] + 0.5 for point in path])
             y_pre = np.asarray([point[1] + 0.5 for point in path])
-            plt.quiver(x_pre[:-1], y_pre[:-1], x_pre[1:] - x_pre[:-1], y_pre[1:] - y_pre[:-1],
-                       color="#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)]),
-                       scale_units='xy', angles='xy', scale=1, label='prefix path')
+            plt.quiver(
+                x_pre[:-1],
+                y_pre[:-1],
+                x_pre[1:] - x_pre[:-1],
+                y_pre[1:] - y_pre[:-1],
+                color="#" + "".join([random.choice("0123456789ABCDEF") for j in range(6)]),
+                scale_units="xy",
+                angles="xy",
+                scale=1,
+                label="prefix path",
+            )
 
-            plt.savefig('img/path.png', bbox_inches='tight', dpi=600)
+            plt.savefig("img/path.png", bbox_inches="tight", dpi=600)
 
     def allocate_region_dars(self):
         # (x, y) --> (y-1, 30-x)
@@ -194,12 +213,9 @@ class Workspace(object):
         regions.append(list(itertools.product(range(0, 2), range(6, 7))))  # l5
         regions.append(list(itertools.product(range(4, 6), range(9, 10))))  # l6
 
-
-
         return regions
 
     def allocate_obstacle_dars(self):
-
         # small workspace
         obstacles = []
         # obstacles.append(list(itertools.product(range(3, 4), range(2, 6))) + [(4, 2)])  # o1
@@ -207,7 +223,7 @@ class Workspace(object):
         # obstacles.append(list(itertools.product(range(4, 5), range(0, 6))))  # o1
         # TRO version 2
         obstacles.append(list(itertools.product(range(0, 3), range(1, 2))))  # o1
-        obstacles.append(list(itertools.product(range(4, 5), range(1, 8))) + [(3,6), (5,2), (5,3)])  # o2
+        obstacles.append(list(itertools.product(range(4, 5), range(1, 8))) + [(3, 6), (5, 2), (5, 3)])  # o2
         obstacles.append(list(itertools.product(range(7, 8), range(0, 2))))  # o3
         obstacles.append(list(itertools.product(range(8, 10), range(3, 4))))  # o4
         obstacles.append(list(itertools.product(range(6, 7), range(5, 8))))  # o5
@@ -215,7 +231,6 @@ class Workspace(object):
         obstacles.append(list(itertools.product(range(6, 7), range(9, 10))))  # o7
         obstacles.append(list(itertools.product(range(2, 3), range(8, 10))))  # o8
         obstacles.append(list(itertools.product(range(0, 1), range(7, 8))))  # o9
-
 
         return obstacles
 
@@ -234,16 +249,15 @@ class Workspace(object):
         region = []
         obs = []
         for k in range(1, 10):
-            obs += self.obstacles['o'+str(k)]
+            obs += self.obstacles["o" + str(k)]
         for k in range(0, 6):
-            region += self.regions['l'+str(k)]
-        x0 = [(i, j) for i in range(10) for j in range(10)
-              if (i, j) not in obs and (i, j) not in region]
+            region += self.regions["l" + str(k)]
+        x0 = [(i, j) for i in range(10) for j in range(10) if (i, j) not in obs and (i, j) not in region]
         for robot_type in self.type_num.keys():
             for num in range(self.type_num[robot_type]):
                 while True:
                     candidate = random.sample(x0, 1)[0]
-                    if candidate not in type_robot_location.values():
+                    if candidate not in type_robot_location.values():  # TODO: 使用集合差
                         type_robot_location[(robot_type, num)] = candidate
                         x0.remove(candidate)
                         break
@@ -251,7 +265,7 @@ class Workspace(object):
 
     def update_after_prefix(self, loop=False):
         # region and corresponding locations
-        self.label_location = {'r{0}'.format(i + 1): j for i, j in enumerate(list(self.type_robot_location.values()))}
+        self.label_location = {"r{0}".format(i + 1): j for i, j in enumerate(list(self.type_robot_location.values()))}
         # if robots return to their initial locations
         self.regions.update({label: [region] for label, region in self.label_location.items()})
 
@@ -267,9 +281,11 @@ class Workspace(object):
             for l1 in range(len(self.regions)):
                 min_length = np.inf
                 for target in self.regions[key_region[l1]]:
-                    length, _ = nx.algorithms.single_source_dijkstra(self.graph_workspace,
-                                                                     source=self.label_location[key_init[r1]],
-                                                                     target=target)
+                    length, _ = nx.algorithms.single_source_dijkstra(
+                        self.graph_workspace,
+                        source=self.label_location[key_init[r1]],
+                        target=target,
+                    )
                     if length < min_length:
                         min_length = length
                 self.p2p[(key_init[r1], key_region[l1])] = min_length
@@ -279,9 +295,11 @@ class Workspace(object):
         if loop:
             for r1 in range(len(self.label_location)):
                 for r2 in range(r1, len(self.label_location)):
-                    length, path = nx.algorithms.single_source_dijkstra(self.graph_workspace,
-                                                                        source=self.label_location[key_init[r1]],
-                                                                        target=self.label_location[key_init[r2]])
+                    length, path = nx.algorithms.single_source_dijkstra(
+                        self.graph_workspace,
+                        source=self.label_location[key_init[r1]],
+                        target=self.label_location[key_init[r2]],
+                    )
                     self.p2p[(key_init[r1], key_init[r2])] = length
                     self.p2p[(key_init[r2], key_init[r1])] = length
 
@@ -291,10 +309,9 @@ class Workspace(object):
         """
         horizon = 0
         for robot in init.keys():
-            length, _ = nx.algorithms.single_source_dijkstra(self.graph_workspace,
-                                                             source=init[robot],
-                                                             target=target[robot])
+            length, _ = nx.algorithms.single_source_dijkstra(
+                self.graph_workspace, source=init[robot], target=target[robot]
+            )
             if length > horizon:
                 horizon = length
         return horizon
-
